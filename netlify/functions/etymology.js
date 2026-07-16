@@ -69,7 +69,43 @@ Tüm metinler TÜRKÇE olmalı (kelimenin/kökün orijinal yazımı hariç). Bil
           systemInstruction: { parts: [{ text: systemPrompt }] },
           generationConfig: {
             responseMimeType: "application/json",
-            maxOutputTokens: 1500,
+            maxOutputTokens: 4096,
+            thinkingConfig: { thinkingLevel: "low" },
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                word: { type: "STRING" },
+                ipa: { type: "STRING" },
+                origin_family: { type: "STRING" },
+                summary: { type: "STRING" },
+                timeline: {
+                  type: "ARRAY",
+                  items: {
+                    type: "OBJECT",
+                    properties: {
+                      era: { type: "STRING" },
+                      period: { type: "STRING" },
+                      form: { type: "STRING" },
+                      meaning: { type: "STRING" },
+                    },
+                    required: ["era", "form", "meaning"],
+                  },
+                },
+                cognates: {
+                  type: "ARRAY",
+                  items: {
+                    type: "OBJECT",
+                    properties: {
+                      language: { type: "STRING" },
+                      word: { type: "STRING" },
+                    },
+                    required: ["language", "word"],
+                  },
+                },
+                fun_fact: { type: "STRING" },
+              },
+              required: ["word", "origin_family", "summary", "timeline", "cognates", "fun_fact"],
+            },
           },
         }),
       }
@@ -84,7 +120,8 @@ Tüm metinler TÜRKÇE olmalı (kelimenin/kökün orijinal yazımı hariç). Bil
       );
     }
 
-    const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("\n") || "";
+    const candidate = data.candidates?.[0];
+    const text = candidate?.content?.parts?.map((p) => p.text || "").join("\n") || "";
     let clean = text.replace(/```json|```/g, "").trim();
     const firstBrace = clean.indexOf("{");
     const lastBrace = clean.lastIndexOf("}");
@@ -92,7 +129,18 @@ Tüm metinler TÜRKÇE olmalı (kelimenin/kökün orijinal yazımı hariç). Bil
       clean = clean.slice(firstBrace, lastBrace + 1);
     }
 
-    const parsed = JSON.parse(clean);
+    let parsed;
+    try {
+      parsed = JSON.parse(clean);
+    } catch (parseErr) {
+      const reason = candidate?.finishReason || "bilinmiyor";
+      return new Response(
+        JSON.stringify({
+          error: `Yanıt eksik/bozuk geldi (sebep: ${reason}). Tekrar dener misin?`,
+        }),
+        { status: 502, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     return new Response(JSON.stringify(parsed), {
       status: 200,
