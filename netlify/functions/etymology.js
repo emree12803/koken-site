@@ -1,6 +1,7 @@
-// Bu fonksiyon tarayıcıdan gelen isteği alır, Anthropic API'yi
-// ANTHROPIC_API_KEY (Netlify ortam değişkeni) ile sunucu tarafında çağırır,
+// Bu fonksiyon tarayıcıdan gelen isteği alır, Google Gemini API'yi
+// GEMINI_API_KEY (Netlify ortam değişkeni) ile sunucu tarafında çağırır,
 // ve sonucu tarayıcıya geri döner. API anahtarı hiçbir zaman tarayıcıya gitmez.
+// Gemini API'nin kredi kartsız, ücretsiz bir katmanı var: aistudio.google.com
 
 export default async (req) => {
   if (req.method !== "POST") {
@@ -10,10 +11,10 @@ export default async (req) => {
     });
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: "ANTHROPIC_API_KEY ortam değişkeni ayarlanmamış." }),
+      JSON.stringify({ error: "GEMINI_API_KEY ortam değişkeni ayarlanmamış." }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
@@ -56,31 +57,34 @@ Tüm metinler TÜRKÇE olmalı (kelimenin/kökün orijinal yazımı hariç). Bil
 }`;
 
   try {
-    const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-5",
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [{ role: "user", content: `Kelime/ifade: ${word}` }],
-      }),
-    });
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            { role: "user", parts: [{ text: `Kelime/ifade: ${word}` }] },
+          ],
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          generationConfig: {
+            responseMimeType: "application/json",
+            maxOutputTokens: 1500,
+          },
+        }),
+      }
+    );
 
-    const data = await anthropicRes.json();
+    const data = await geminiRes.json();
 
-    if (!anthropicRes.ok) {
+    if (!geminiRes.ok) {
       return new Response(
-        JSON.stringify({ error: data.error?.message || "Anthropic API hatası" }),
-        { status: anthropicRes.status, headers: { "Content-Type": "application/json" } }
+        JSON.stringify({ error: data.error?.message || "Gemini API hatası" }),
+        { status: geminiRes.status, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const text = (data.content || []).map((b) => b.text || "").join("\n");
+    const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("\n") || "";
     let clean = text.replace(/```json|```/g, "").trim();
     const firstBrace = clean.indexOf("{");
     const lastBrace = clean.lastIndexOf("}");
