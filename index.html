@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kök — kelimelerin izini sür</title>
+<title>Kök</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -306,8 +306,8 @@
 <body>
 <div class="wrap">
 
-  <div class="eyebrow">kök — bir kazı aracı</div>
-  <h1>Her kelimenin <em>bir tarihi</em> vardır.</h1>
+  <div class="eyebrow">kök</div>
+  
   <div class="sub">Bir kelime ya da kısa bir ifade yaz, en eski köküne kadar iz sürelim — hangi dilden geldi, yolculukta anlamı nasıl değişti, hangi dillerde akrabaları var.</div>
 
   <div id="form">
@@ -317,7 +317,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </button>
   </div>
-  <div class="hint">Enter'a bas ya da "izini sür"e tıkla</div>
+  <div class="hint">Enter'a bas ya da "araştır"a tıkla</div>
 
   <div id="result"></div>
 
@@ -351,7 +351,7 @@ function esc(s){
 }
 
 async function lookup(word){
-  resultEl.innerHTML = `<div class="loading"><div class="dig"></div> "${esc(word)}" için katmanlar kazılıyor…</div>`;
+  resultEl.innerHTML = `<div class="loading"><div class="dig"></div> "${esc(word)}" araştırılıyor…</div>`;
 
   try{
     const response = await fetch("/api/etymology", {
