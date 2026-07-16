@@ -1,1 +1,409 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kök — kelimelerin izini sür</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --parchment: #F1E7D2;
+    --parchment-deep: #E7D9BB;
+    --ink: #232323ff;
+    --ink-navy: #1E2B33;
+    --sepia: #4A3728;
+    --ochre: #A9793B;
+    --rust: #A2402A;
+    --line: rgba(30,43,51,0.14);
+  }
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0;
+    background: var(--parchment);
+    color: var(--ink-navy);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  body{
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(169,121,59,0.07), transparent 45%),
+      radial-gradient(circle at 85% 75%, rgba(162,64,42,0.06), transparent 50%);
+    min-height:100vh;
+  }
+  .wrap{
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 120px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom: 18px;
+  }
+  .eyebrow::before{
+    content:'';
+    width: 22px; height:1px;
+    background: var(--ochre);
+    display:inline-block;
+  }
+  h1{
+    font-family:'Newsreader', serif;
+    font-weight: 500;
+    font-style: italic;
+    font-size: clamp(34px, 6vw, 52px);
+    line-height: 1.08;
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+  }
+  h1 em{
+    font-style: normal;
+    color: var(--rust);
+  }
+  .sub{
+    font-size: 16px;
+    color: var(--sepia);
+    max-width: 46ch;
+    line-height: 1.55;
+    margin-bottom: 44px;
+  }
+
+  #form{
+    position: relative;
+    border-bottom: 2px solid var(--ink-navy);
+    padding-bottom: 14px;
+    margin-bottom: 8px;
+  }
+  input[type=text]{
+    width:100%;
+    border:none;
+    background:transparent;
+    outline:none;
+    font-family:'Newsreader', serif;
+    font-style: italic;
+    font-size: clamp(24px, 4.2vw, 34px);
+    color: var(--ink-navy);
+    padding-right: 46px;
+  }
+  input[type=text]::placeholder{
+    color: rgba(30,43,51,0.32);
+  }
+  .go{
+    position:absolute;
+    right:0; bottom: 12px;
+    background:none;
+    border:none;
+    cursor:pointer;
+    color: var(--ink-navy);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding: 6px 4px;
+  }
+  .go:hover{ color: var(--rust); }
+  .go svg{ width:16px; height:16px; }
+  .hint{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(30,43,51,0.4);
+    margin-bottom: 56px;
+  }
+
+  #result{ min-height: 20px; }
+
+  .loading{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--sepia);
+    padding: 30px 0;
+  }
+  .dig{
+    width:14px; height:14px;
+    border: 2px solid var(--ochre);
+    border-top-color: transparent;
+    border-radius:50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  .error{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--rust);
+    padding: 20px 0;
+  }
+
+  .card-in{
+    animation: rise 0.5s ease both;
+  }
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(14px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  .headword{
+    display:flex;
+    align-items:baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .headword .w{
+    font-family:'Newsreader', serif;
+    font-size: 30px;
+    font-weight: 600;
+  }
+  .headword .ipa{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--ochre);
+  }
+  .origin-tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sepia);
+    background: var(--parchment-deep);
+    border: 1px solid var(--line);
+    padding: 3px 9px;
+    border-radius: 3px;
+    display:inline-block;
+    margin-bottom: 22px;
+  }
+  .summary{
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink-navy);
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* strata / timeline */
+  .strata{
+    position: relative;
+    margin: 0 0 44px;
+    padding-left: 26px;
+  }
+  .strata::before{
+    content:'';
+    position:absolute;
+    left: 5px; top: 6px; bottom: 6px;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--ochre), var(--rust));
+    opacity: 0.4;
+  }
+  .layer{
+    position: relative;
+    padding-bottom: 30px;
+  }
+  .layer:last-child{ padding-bottom: 0; }
+  .layer::before{
+    content:'';
+    position:absolute;
+    left: -26px; top: 5px;
+    width: 9px; height:9px;
+    border-radius:50%;
+    background: var(--parchment);
+    border: 2px solid var(--rust);
+  }
+  .layer-meta{
+    display:flex;
+    align-items:baseline;
+    gap: 10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--ochre);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .layer-meta .period{ color: rgba(30,43,51,0.45); text-transform:none; }
+  .layer-form{
+    font-family:'Newsreader', serif;
+    font-style: italic;
+    font-size: 21px;
+    color: var(--ink-navy);
+    margin-bottom: 4px;
+  }
+  .layer-meaning{
+    font-size: 14.5px;
+    color: var(--sepia);
+    line-height: 1.5;
+  }
+
+  .cognates{
+    margin-bottom: 36px;
+  }
+  .section-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 14px;
+  }
+  .cog-list{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .cog{
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.35);
+    border-radius: 3px;
+    padding: 7px 12px;
+    font-size: 13.5px;
+  }
+  .cog .lang{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ochre);
+    text-transform: uppercase;
+    margin-right: 7px;
+  }
+  .cog .word{
+    font-family:'Newsreader', serif;
+    font-style: italic;
+  }
+
+  .fact{
+    border-left: 2px solid var(--rust);
+    padding: 4px 0 4px 16px;
+    font-size: 14.5px;
+    color: var(--sepia);
+    line-height: 1.55;
+  }
+  .fact .section-label{ color: var(--rust); }
+
+  footer{
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(30,43,51,0.35);
+    margin-top: 90px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .dig{ animation:none; }
+    .card-in{ animation:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">kök — bir kazı aracı</div>
+  <h1>Her kelimenin <em>bir tarihi</em> vardır.</h1>
+  <div class="sub">Bir kelime ya da kısa bir ifade yaz, en eski köküne kadar iz sürelim — hangi dilden geldi, yolculukta anlamı nasıl değişti, hangi dillerde akrabaları var.</div>
+
+  <div id="form">
+    <input type="text" id="wordInput" placeholder="ör. tuz, kahve, merhaba, algorithm…" autocomplete="off" autofocus>
+    <button type="button" id="goBtn" class="go" aria-label="Kökenini bul">
+      izini sür
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+  <div class="hint">Enter'a bas ya da "izini sür"e tıkla</div>
+
+  <div id="result"></div>
+
+  <footer>kök · her arama, o kelimenin bulunabilen en eski katmanına kadar iner</footer>
+</div>
+
+<script>
+const input = document.getElementById('wordInput');
+const goBtn = document.getElementById('goBtn');
+const resultEl = document.getElementById('result');
+
+function triggerLookup(){
+  const word = input.value.trim();
+  if(!word) return;
+  lookup(word);
+}
+
+goBtn.addEventListener('click', triggerLookup);
+input.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    triggerLookup();
+  }
+});
+
+function esc(s){
+  if(s === undefined || s === null) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+async function lookup(word){
+  resultEl.innerHTML = `<div class="loading"><div class="dig"></div> "${esc(word)}" için katmanlar kazılıyor…</div>`;
+
+  try{
+    const response = await fetch("/api/etymology", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ word })
+    });
+
+    const parsed = await response.json();
+
+    if(!response.ok){
+      throw new Error(parsed.error || ("İstek başarısız oldu (" + response.status + ")"));
+    }
+
+    render(parsed);
+  }catch(err){
+    console.error('kok lookup error:', err);
+    resultEl.innerHTML = `<div class="error">Bir şey ters gitti: ${esc(err.message)}. Tekrar dener misin?</div>`;
+  }
+}
+
+function render(d){
+  const timeline = (d.timeline || []).map(l => `
+    <div class="layer">
+      <div class="layer-meta"><span>${esc(l.era)}</span>${l.period ? `<span class="period">· ${esc(l.period)}</span>` : ''}</div>
+      <div class="layer-form">${esc(l.form)}</div>
+      <div class="layer-meaning">${esc(l.meaning)}</div>
+    </div>
+  `).join('');
+
+  const cognates = (d.cognates || []).map(c => `
+    <div class="cog"><span class="lang">${esc(c.language)}</span><span class="word">${esc(c.word)}</span></div>
+  `).join('');
+
+  resultEl.innerHTML = `
+    <div class="card-in">
+      <div class="headword">
+        <span class="w">${esc(d.word)}</span>
+        ${d.ipa ? `<span class="ipa">/${esc(d.ipa)}/</span>` : ''}
+      </div>
+      ${d.origin_family ? `<div class="origin-tag">${esc(d.origin_family)}</div>` : ''}
+      <div class="summary">${esc(d.summary)}</div>
+
+      ${timeline ? `<div class="section-label">katmanlar</div><div class="strata">${timeline}</div>` : ''}
+
+      ${cognates ? `<div class="cognates"><div class="section-label">akraba kelimeler</div><div class="cog-list">${cognates}</div></div>` : ''}
+
+      ${d.fun_fact ? `<div class="fact"><div class="section-label">bilmeyen var mı</div>${esc(d.fun_fact)}</div>` : ''}
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
 
